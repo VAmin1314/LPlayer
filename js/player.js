@@ -1,25 +1,36 @@
     var LPlayer = {
         property: {
-            playlist: {},
             isShowNotification: false,
             isInitMarquee: true,
             shuffleArray: [],
             shuffleIndex: '',
-            isFirstPlay: localStorage.qplayer == undefined ? true : false,
+            isFirstPlay: true,
             isShuffle: false,
             currentTrack: 0,
             autoplay: false,
+            playlist: {},
+            type: 'json',
             isRotate: true
         },
-        start: function (data = {}) {
+        init: function (data) {
             if (!data.playlist) {
                 // alert('没有播放列表');
                 return false;
             }
 
-            _this = this;
             _this.property.playlist = data.playlist;
             _this.property.autoplay = data.autoPlay;
+            _this.property.type = data.type;
+            _this.property.isRotate = data.isRotate;
+
+            if (_this.property.type == 'api') {
+                _this.getList(data.playlist);
+            }
+        },
+        start: function (data = {}) {
+            _this = this;
+
+            _this.init(data);
 
             for (var i = 0; i < _this.property.playlist.length; i++) {
                 var item = _this.property.playlist[i];
@@ -60,13 +71,11 @@
         },
         play: function () {
             audio.play();
-
             if (_this.property.isRotate) {
                 $("#player .cover img").css("animation", "9.8s linear 0s normal none infinite rotate");
                 $("#player .cover img").css("animation-play-state", "running");
             }
             $('.playback').addClass('playing');
-
             timeout = setInterval(_this.updateProgress, 500);
             if (_this.isExceedTag()) {
                 if (_this.property.isInitMarquee) {
@@ -96,6 +105,7 @@
             _this.setProgress(audio.currentTime);
         },
         switchTrack: function (i) {
+            console.log(i);
             if (i < 0) {
                 track = _this.property.currentTrack = _this.property.playlist.length - 1;
             } else if (i >= _this.property.playlist.length) {
@@ -104,6 +114,7 @@
                 track = i;
             }
 
+            console.log(track);
             _this.property.isInitMarquee = true;
             $('audio').remove();
             _this.loadMusic(track);
@@ -137,7 +148,7 @@
             }
         },
         beforeLoad: function () {
-            // console.log('beforeLoad');
+            console.log('beforeLoad');
         },
         afterLoad: function () {
             if (_this.property.autoplay == true) {
@@ -145,18 +156,17 @@
             }
         },
         loadMusic: function (i) {
-            // 载入音乐
             var item = _this.property.playlist[i];
             while (item.mp3 == "") {
                 if (_this.property.isShuffle) {
-                    if (++(_this.property.shuffleIndex) === _this.property.shuffleArray.length) {
+                    if (++_this.property.shuffleIndex === _this.property.shuffleArray.length) {
                         _this.property.shuffleIndex = 0;
                     }
                     i = _this.property.currentTrack = _this.property.shuffleArray[_this.property.shuffleIndex];
                 } else {
                     _this.property.currentTrack = ++i;
                 }
-                // item = _this.property.playlist[i];
+                item = _this.property.playlist[i];
             }
 
             var newaudio = $('<audio>').html('<source src="' + item.mp3 + '"><source src="' + item.ogg + '">').appendTo('#player');
@@ -171,9 +181,7 @@
             audio.addEventListener('ended', _this.ended, false);
         },
         shuffle: function(array) {
-            // 随机
             var m = array.length, t, i;
-
             while (m) {
                 i = Math.floor(Math.random() * m--);
                 t = array[m];
@@ -184,12 +192,10 @@
             return array;
         },
         isExceedTag: function() {
-            // 判断是否超过标签
             var isExceedTag = false;
             if ($('.musicTag strong').width() + $('.musicTag span').width() + $('.musicTag .artist').width() > $('.musicTag').width()) {
                 isExceedTag = true;
             }
-
             return isExceedTag;
         },
         initMarquee: function () {
@@ -200,6 +206,18 @@
                 direction: 'left',
                 duplicated: true
             });
+        },
+        getList: function (url) {
+            // 根据API获取 json 数据
+            $.ajax({
+                url: url,
+                type: 'post',
+                dataType: 'json',
+                async: false,
+                success: function (data) {
+                    _this.property.playlist = data;
+                }
+            })
         }
     };
 
@@ -225,32 +243,31 @@
             }
         });
 
-        // 随机播放
         // $("#player .cover").on('click', function () {
-        //     isShuffle = LPlayer.property.isShuffle;
+        //     isShuffle = music.property.isShuffle;
         //     if (isShuffle) {
         //         $("#player .cover").attr("title", "点击关闭随机播放");
 
         //         var temp = [];
-        //         for (var i = 0; i < LPlayer.playlist.length; i++) {
+        //         for (var i = 0; i < music.playlist.length; i++) {
         //             temp[i] = i;
         //         }
 
-        //         shuffleArray = LPlayer.shuffle(temp);
+        //         shuffleArray = music.shuffle(temp);
         //         for (var j = 0; j < shuffleArray.length; j++) {
-        //             if (shuffleArray[j] === LPlayer.property.currentTrack) {
+        //             if (shuffleArray[j] === music.property.currentTrack) {
         //                 shuffleIndex = j;
         //                 break;
         //             }
         //         }
 
-        //         localStorage.qplayer_shuffle_array = JSON.stringify(LPlayer.shuffleArray);
+        //         localStorage.qplayer_shuffle_array = JSON.stringify(music.shuffleArray);
         //     } else {
         //         $("#player .cover").attr("title", "点击开启随机播放");
         //         localStorage.removeItem('qplayer_shuffle_array');
         //     }
 
-        //     localStorage.qplayer = LPlayer.isShuffle;
+        //     localStorage.qplayer = music.isShuffle;
         // });
 
         $("#QPlayer .ssBtn").on('click', function () {
@@ -309,4 +326,9 @@
             var num = $(this).index();
             LPlayer.switchTrack(num);
         });
+
+        var lis= $('.lib');
+        for(var i=0; i<lis.length; i+=2){
+            lis[i].style.background = 'rgba(246, 246, 246, 0.5)';
+        }
     })
