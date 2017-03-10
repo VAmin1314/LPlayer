@@ -1,10 +1,29 @@
 # LPlayer
 一款简洁小巧的HTML5底部悬浮音乐播放器。基于[@Jrohy](https://github.com/Jrohy)的QPlayer项目修改
 
+##使用方法
+```
+var playlist = [{
+    title: "", // 标题
+    artist: "", // 作者
+    mp3: "", //歌曲链接
+    cover: "" //歌曲封面链接
+}];
+
+LPlayer.start({
+    playList: playList, // 需要播放的列表,需要格式为 json 对象
+    autoPlay: true // 是否开始自动播放，默认开始
+})
+```
+
+##2017-03-10
+* 修改调用方式
+* 暂时不支持随机播放
+* 取消首次播放相关信息提示
+
 ##界面
 ![QPlayer.PNG][1]
 
-##Tips
 
 
 
@@ -18,15 +37,4 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
- [1]: https://32mb.space/usr/uploads/2016/08/858331127.png
+[1]: https://32mb.space/usr/uploads/2016/08/858331127.png
